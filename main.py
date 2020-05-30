@@ -3,10 +3,9 @@ import cv2
 import pickle
 import json
 import os
-import asyncio
-import pyttsx3
 from playsound import playsound
 from gtts import gTTS
+import pyttsx3
 from random import randrange
 from datetime import datetime
 
@@ -19,7 +18,9 @@ with open("insults.json", "r") as insultFile:
     insults = json.load(insultFile)
 
 other_insults = insults["other"]
-last_insult_timestamp = int(datetime.now().timestamp()) - 15
+insult_time_delta = 30
+TTFI = int(insult_time_delta * 0.75) # Time to first insult
+last_insult_timestamp = int(datetime.now().timestamp()) - TTFI
 smallest_insult_count = 0
 
 engine = pyttsx3.init()
@@ -29,7 +30,10 @@ with open("labels.pickle", "rb") as f:
     labels = pickle.load(f)
     labels = {v:k for k,v in labels.items()}
 
-cap = cv2.VideoCapture(0)
+try:
+    cap = cv2.VideoCapture(0)
+except cv2.error as e:
+    exit
 
 def getTimeStamp():
     return int(datetime.now().timestamp())
@@ -73,7 +77,7 @@ def detectFaceAndDrawRect(frame, recognizer):
         color = (255, 0, 0) #BGR, not RGB
         stroke = 2
         cv2.rectangle(frame, (x, y), (x + w, y + h), color, stroke)
-    return frame
+    return (frame, len(frontals))
 
 def getRandRange(insultSet):
     global smallest_insult_count
@@ -99,31 +103,31 @@ def insult(insultSet):
             break
     current_idx = (len(insultSet) - 1) if current_idx >= len(insultSet) else current_idx
     insult = insultSet[current_idx]["insult"]
-    print(smallest_insult_count, current_idx, insult)
     insultSet[current_idx]["count"] += 1
-    engine.say(insult)
-    engine.runAndWait()
-    # tts = gTTS(text=insult, lang='en', slow=False)
-    # filename = 'temp.mp3'
+    filename = "temp.mp3"
+    # tts = gTTS(insult, lang='en')
     # tts.save(filename)
     # playsound(filename)
     # os.remove(filename)
+    engine.say(insult)
+    engine.runAndWait()
     
 
 if __name__ == "__main__":
-    # recognizer.read("trainer.yml")
-    engine.setProperty('rate', 145)
+
+    engine.setProperty('rate', 155)
     voices = engine.getProperty('voices') 
-    engine.setProperty('voice', voices[1].id)
+    engine.setProperty('voice', "english")
+
     while(True):
         ret, frame = cap.read()
 
         # Detect and recognize faces
-        processed_frame = detectFaceAndDrawRect(frame, 0)
+        (processed_frame, nr_faces) = detectFaceAndDrawRect(frame, 0)
 
         cv2.imshow('frame', processed_frame)
         c = cv2.waitKey(20)
-        if (getTimeStamp() - last_insult_timestamp >= 20):
+        if (getTimeStamp() - last_insult_timestamp >= insult_time_delta) and nr_faces > 0:
             last_insult_timestamp = getTimeStamp()
             insult(other_insults)
         if c & 0xFF == ord('q'):
