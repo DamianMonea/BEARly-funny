@@ -14,12 +14,12 @@ profile_face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_profilef
 
 # recognizer = cv2.face.LBPHFaceRecognizer_create(neighbors = 8)
 
-vadim_mode = False
+vadim_mode = True
 vadim_location = "./vadim/"
 
 danutza_mode = True
 danutza_location = "./dana/"
-language = 1 # 0 - english; 1 - romanian
+language = 0 # 0 - english; 1 - romanian
 insults = {}
 
 if language == 0:
@@ -108,7 +108,7 @@ def insult(insultSet):
     except OSError as err:
         pass
     tts.save(filename)
-    playsound(filename, False)
+    playsound(filename)
 
 def load_vadim():
     global insults
@@ -129,12 +129,12 @@ def load_danutza():
 def vadim_tudor():
     global insults
     rand_nr = randrange(len(insults["vadim"]))
-    playsound(insults["vadim"][rand_nr]["filename"], False)
+    playsound(insults["vadim"][rand_nr]["filename"])
 
 def dana_budeanu():
     global insults
     rand_nr = randrange(len(insults["danutza"]))
-    playsound(insults["danutza"][rand_nr]["filename"], False)
+    playsound(insults["danutza"][rand_nr]["filename"])
 
 if __name__ == "__main__":
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
                 insult(other_insults)
             else:
                 rand_nr = randrange(1000)
-                if rand_nr % 2 == 0 and vadim_mode:
+                if rand_nr > 800 and vadim_mode:
                     if turn >= 2 and danutza_mode:
                         dana_budeanu()
                         turn -= 1
