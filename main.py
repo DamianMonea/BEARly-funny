@@ -14,11 +14,23 @@ profile_face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_profilef
 
 # recognizer = cv2.face.LBPHFaceRecognizer_create(neighbors = 8)
 
-with open("insults.json", "r") as insultFile:
-    insults = json.load(insultFile)
+vadim_mode = True
+vadim_location = "./vadim/"
+vadim_files = ["ordine.mp3", "oglinda.mp3"]
+language = 1 # 0 - english; 1 - romanian
+insults = {}
+if language == 0:
+    with open("insults_en.json", "r") as insultFile:
+        insults = json.load(insultFile)
+elif language == 1:
+    with open("insults_ro.json", "r") as insultFile:
+        insults = json.load(insultFile)
 
+thanks1 = "Am văzut că v-a plăcut ursulețul cu insulte, deci acest tik tok este prezentat de el."
+thanks2 = " Vă multumesc pentru 20 de mii de urmăritori. Mă bucur că încă vă plac videoclipurile pe care le postez."
+thanks3 = " Sunteti cei mai tari!"
 other_insults = insults["other"]
-insult_time_delta = 30
+insult_time_delta = 8
 TTFI = int(insult_time_delta * 0.75) # Time to first insult
 last_insult_timestamp = int(datetime.now().timestamp()) - TTFI
 smallest_insult_count = 0
@@ -109,15 +121,33 @@ def insult(insultSet):
     # tts.save(filename)
     # playsound(filename)
     # os.remove(filename)
-    engine.say(insult)
+    engine.say(thanks1)
     engine.runAndWait()
-    
+    engine.say(thanks2)
+    engine.runAndWait()
+    engine.say(thanks3)
+    engine.runAndWait()
+
+aux = 0
+def pitica_nenorocita():
+    global aux
+    #idx = randrange(int((len(vadim_files) * 20) % len(vadim_files)) + 1)
+    idx = aux
+    aux += 1
+    if (idx < 2):
+        selected_file = vadim_location + vadim_files[idx]
+        playsound(selected_file)
 
 if __name__ == "__main__":
 
+    lang_name = ""
+    if language == 0:
+        lang_name = "english"
+    elif language == 1:
+        lang_name = "romanian"
     engine.setProperty('rate', 155)
     voices = engine.getProperty('voices') 
-    engine.setProperty('voice', "english")
+    engine.setProperty('voice', lang_name)
 
     while(True):
         ret, frame = cap.read()
@@ -129,7 +159,10 @@ if __name__ == "__main__":
         c = cv2.waitKey(20)
         if (getTimeStamp() - last_insult_timestamp >= insult_time_delta) and nr_faces > 0:
             last_insult_timestamp = getTimeStamp()
-            insult(other_insults)
+            if not vadim_mode:
+                insult(other_insults)
+            else:
+                pitica_nenorocita()
         if c & 0xFF == ord('q'):
             break
         if c & 0xFF == ord('s'):
